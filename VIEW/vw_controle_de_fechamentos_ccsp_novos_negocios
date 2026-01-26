@@ -1,0 +1,197 @@
+SELECT DISTINCT `p`.`pj` AS `PJ`,
+                `p`.`numero_integracao` AS `PASTA`,
+                `p`.`sigla_integracao` AS `PARCEIRO`,
+
+  (SELECT group_concat(`e`.`descricao` separator ' | ')
+   FROM (`tramitacao` `t`
+         LEFT JOIN `tab_evento` `e` on(`e`.`sigla` = `t`.`evento`))
+   WHERE `e`.`sigla` IN ('IC',
+                         'II',
+                         'IID',
+                         'IIG',
+                         'IG',
+                         'FB',
+                         'SIT',
+                         'TRPA')
+     AND `t`.`id_processo` = `p`.`pj`) AS `ORIGEM PROSPEC`,
+
+  (SELECT group_concat(`t`.`texto` separator ' | ')
+   FROM (`tramitacao` `t`
+         LEFT JOIN `tab_evento` `e` on(`e`.`sigla` = `t`.`evento`))
+   WHERE `e`.`sigla` IN ('IC',
+                         'II',
+                         'IID',
+                         'IIG',
+                         'IG',
+                         'FB',
+                         'SIT',
+                         'TRPA')
+     AND `t`.`id_processo` = `p`.`pj`) AS `COMPLEMENTO ORIGEM`,
+                `pa`.`nome` AS `AUTOR`,
+                `pr`.`nome` AS `REU`,
+                `pa`.`cpf_cnpj` AS `CPF`,
+                `p`.`numero_processo` AS `NUMERO DO PROCESSO`,
+                `m`.`descricao` AS `MATERIA`,
+                `tm`.`descricao` AS `TEMA`,
+                `j`.`descricao` AS `CIDADE`,
+                `j`.`estado` AS `UF`,
+
+  (SELECT `t`.`data_hora_lan`
+   FROM `tramitacao` `t`
+   WHERE `t`.`id_processo` = `p`.`pj`
+     AND `t`.`evento` = 'CLIFA'
+   ORDER BY `t`.`data_hora_lan` DESC
+   LIMIT 1) AS `DATA DO FECHAMENTO`,
+                `f`.`descricao` AS `FASE`,
+                `f`.`update_data_hora` AS `ALTERADA EM`,
+
+  (SELECT `e`.`descricao`
+   FROM (`tramitacao` `t`
+         LEFT JOIN `tab_evento` `e` on(`e`.`sigla` = `t`.`evento`))
+   WHERE `t`.`id_processo` = `p`.`pj`
+     AND `t`.`evento` IN ('INSS',
+                          'SUBST',
+                          'NA',
+                          'DNA',
+                          'CCPAA',
+                          'VCPA',
+                          'CPA',
+                          'VDC',
+                          'CCPA',
+                          'CCNCA',
+                          'AUDI',
+                          'MAN',
+                          'ANDA',
+                          'PUB',
+                          'ENPT',
+                          'RPET',
+                          'RED',
+                          'CCI',
+                          'PET')
+     AND `t`.`id_tramitacao_situacao` <> 2
+   ORDER BY `t`.`id_tramitacao` DESC
+   LIMIT 1) AS `ULTIMO EVENTO`,
+
+  (SELECT `t`.`texto`
+   FROM `tramitacao` `t`
+   WHERE `t`.`id_processo` = `p`.`pj`
+     AND `t`.`evento` IN ('INSS',
+                          'SUBST',
+                          'NA',
+                          'DNA',
+                          'CCPAA',
+                          'VCPA',
+                          'CPA',
+                          'VDC',
+                          'CCPA',
+                          'CCNCA',
+                          'AUDI',
+                          'MAN',
+                          'ANDA',
+                          'PUB',
+                          'ENPT',
+                          'RPET',
+                          'RED',
+                          'CCI',
+                          'PET')
+     AND `t`.`id_tramitacao_situacao` <> 2
+   ORDER BY `t`.`id_tramitacao` DESC
+   LIMIT 1) AS `TEXTO`,
+
+  (SELECT CASE `t`.`evento`
+              WHEN 'INSS' THEN 'CLIENTES AFASTADOS'
+              WHEN 'SUBST' THEN 'SUBSTITUIÇÃO'
+              WHEN 'NA' THEN 'NÃO AJUIZAVEL'
+              WHEN 'DNA' THEN 'NÃO AJUIZAVEL'
+              WHEN 'CCPAA' THEN 'NÃO AJUIZAVEL'
+              WHEN 'VCPA' THEN 'NÃO AJUIZAVEL'
+              WHEN 'CPA' THEN 'NÃO AJUIZAVEL'
+              WHEN 'VDC' THEN 'NÃO AJUIZAVEL'
+              WHEN 'CCPA' THEN 'NÃO AJUIZAVEL'
+              WHEN 'CCNCA' THEN 'NÃO AJUIZAVEL'
+              WHEN 'AUDI' THEN 'AUDITORIA'
+              WHEN 'MAN' THEN 'DISTRIBUIDOS'
+              WHEN 'ANDA' THEN 'DISTRIBUIDOS'
+              WHEN 'PUB' THEN 'DISTRIBUIDOS'
+              WHEN 'ENPT' THEN 'DISTRIBUIDOS'
+              WHEN 'RPET' THEN 'REDISTRIBUIÇÃO'
+              WHEN 'RED' THEN 'REDISTRIBUIÇÃO'
+              WHEN 'CCI' THEN 'INICIAL'
+              WHEN 'PET' THEN 'INICIAL'
+          END
+   FROM `tramitacao` `t`
+   WHERE `t`.`id_processo` = `p`.`pj`
+     AND `t`.`evento` IN ('INSS',
+                          'SUBST',
+                          'NA',
+                          'DNA',
+                          'CCPAA',
+                          'VCPA',
+                          'CPA',
+                          'VDC',
+                          'CCPA',
+                          'CCNCA',
+                          'AUDI',
+                          'MAN',
+                          'ANDA',
+                          'PUB',
+                          'ENPT',
+                          'RPET',
+                          'RED',
+                          'CCI',
+                          'PET')
+     AND `t`.`id_tramitacao_situacao` <> 2
+   ORDER BY `t`.`id_tramitacao` DESC
+   LIMIT 1) AS `STATUS`,
+                `p`.`z_indicacao` AS `ORIGEM (ANTIGO)`,
+
+  (SELECT `t`.`texto`
+   FROM `tramitacao` `t`
+   WHERE `t`.`id_processo` = `p`.`pj`
+     AND `t`.`evento` = 'CLINF'
+   ORDER BY `t`.`data_hora_lan` DESC
+   LIMIT 1) AS `MOTIVO DO NÃO FECHAMENTO`,
+
+  (SELECT `e`.`descricao`
+   FROM (`tramitacao` `t`
+         LEFT JOIN `tab_evento` `e` on(`e`.`sigla` = `t`.`evento`))
+   WHERE `e`.`sigla` IN ('LN',
+                         'LN2',
+                         'LPP',
+                         'LPP2',
+                         'LP',
+                         'LP2')
+     AND `t`.`id_processo` = `p`.`pj`
+   ORDER BY `t`.`data_hora_lan` DESC
+   LIMIT 1) AS `LAUDOS`,
+
+  (SELECT `e`.`descricao`
+   FROM (`tramitacao` `t`
+         LEFT JOIN `tab_evento` `e` on(`e`.`sigla` = `t`.`evento`))
+   WHERE `e`.`sigla` IN ('SIMP',
+                         'SPARC',
+                         'SPRO',
+                         'SSRM',
+                         'SNP',
+                         'SDE',
+                         'SFA',
+                         'SRM')
+     AND `t`.`id_processo` = `p`.`pj`
+     AND `t`.`id_tramitacao_situacao` <> 2
+   ORDER BY `t`.`data_hora_lan` DESC
+   LIMIT 1) AS `SENTENCA`
+FROM ((((((`cad_processo` `p`
+           LEFT JOIN `tab_materia` `m` on(`m`.`codigo` = `p`.`materia`))
+          LEFT JOIN `tab_juizo` `j` on(`j`.`sigla` = `p`.`juizo`))
+         LEFT JOIN `cad_pessoa` `pa` on(`pa`.`codigo` = `p`.`primeiro_autor`))
+        LEFT JOIN `cad_pessoa` `pr` on(`pr`.`codigo` = `p`.`primeiro_reu`))
+       LEFT JOIN `tab_fase` `f` on(`f`.`codigo` = `p`.`fase`))
+      LEFT JOIN `tab_tema` `tm` on(`tm`.`id_tema` = `p`.`id_tema`))
+WHERE `p`.`id_unidade` = 1
+  AND `p`.`sigla_integracao` = 'CCSP'
+  AND exists
+    (SELECT 1
+     FROM `tramitacao` `t`
+     WHERE `t`.`id_processo` = `p`.`pj`
+       AND `t`.`evento` = 'CLIFA'
+     LIMIT 1)

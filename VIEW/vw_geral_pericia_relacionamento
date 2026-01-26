@@ -1,0 +1,52 @@
+SELECT `p`.`numero_integracao` AS `PASTA`,
+       `p`.`sigla_integracao` AS `PARCEIRO`,
+       `p`.`numero_processo` AS `NÚMERO PROCESSO`,
+
+  (SELECT `t`.`cumprido_em`
+   FROM `tramitacao` `t`
+   WHERE `t`.`id_processo` = `p`.`pj`
+     AND `t`.`evento` = 'PET'
+   ORDER BY `t`.`data_hora_lan` DESC
+   LIMIT 1) AS `DATA PET PROTOCOLADO`,
+       `pes`.`nome` AS `AUTOR`,
+       `pess`.`nome` AS `RÉU`,
+       `e`.`descricao` AS `EVENTO`,
+       `t`.`update_data_hora` AS `DATA DA PERÍCIA`,
+       `t`.`texto` AS `INFORMAÇÕES DA PERÍCIA`,
+       `tj`.`estado` AS `UF`,
+
+  (SELECT `e`.`descricao`
+   FROM (`tramitacao` `t`
+         LEFT JOIN `tab_evento` `e` on(`e`.`sigla` = `t`.`evento`))
+   WHERE `t`.`evento` IN ('PJDCC',
+                          'PJDNC')
+     AND `t`.`id_processo` = `p`.`pj`
+   ORDER BY `t`.`id_tramitacao` DESC
+   LIMIT 1) AS `PJDCC ou PJDNC`,
+
+  (SELECT `t`.`texto`
+   FROM `tramitacao` `t`
+   WHERE `t`.`evento` IN ('PJDCC',
+                          'PJDNC')
+     AND `t`.`id_processo` = `p`.`pj`
+   ORDER BY `t`.`id_tramitacao`
+   LIMIT 1) AS `TEXTO PJDCC ou PJDN`,
+
+  (SELECT group_concat(`e`.`descricao` separator ' | ')
+   FROM (`tramitacao` `t`
+         LEFT JOIN `tab_evento` `e` on(`e`.`sigla` = `t`.`evento`))
+   WHERE `e`.`sigla` IN ('LN',
+                         'LN2',
+                         'LPP',
+                         'LPP2',
+                         'LP',
+                         'LP2')
+     AND `t`.`id_processo` = `p`.`pj`) AS `LAUDO`
+FROM (((((`cad_processo` `p`
+          LEFT JOIN `tramitacao` `t` on(`t`.`id_processo` = `p`.`pj`))
+         LEFT JOIN `tab_evento` `e` on(`e`.`sigla` = `t`.`evento`))
+        LEFT JOIN `cad_pessoa` `pes` on(`pes`.`codigo` = `p`.`primeiro_autor`))
+       LEFT JOIN `cad_pessoa` `pess` on(`pess`.`codigo` = `p`.`primeiro_reu`))
+      LEFT JOIN `tab_juizo` `tj` on(`tj`.`sigla` = `p`.`juizo`))
+WHERE `t`.`evento` = 'PJD'
+ORDER BY `t`.`id_tramitacao` DESC

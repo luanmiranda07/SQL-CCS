@@ -1,0 +1,25 @@
+DROP PROCEDURE IF EXISTS proc_vw_agenda_ufs_concluido;
+DELIMITER $$
+
+CREATE PROCEDURE proc_vw_agenda_ufs_concluido()
+BEGIN
+    -- Apaga tabela agregada se já existir
+    DROP TABLE IF EXISTS agenda_vw_agenda_ufs_concluido;
+
+    -- Cria a tabela a partir da view de origem
+    CREATE TABLE agenda_vw_agenda_ufs_concluido AS
+    SELECT * FROM vw_agenda_ufs_concluido;
+
+END $$
+DELIMITER ;
+
+CALL proc_vw_agenda_ufs_concluido;
+
+-- (2) Crie o evento agendado (ajuste o nome da procedure se for diferente)
+CREATE EVENT IF NOT EXISTS evt_vw_agenda_ufs_concluido;
+ON SCHEDULE EVERY 1 HOUR
+DO
+ CALL proc_vw_agenda_ufs_concluido();
+
+SHOW EVENTS WHERE Name = 'evt_vw_agenda_ufs_concluido';
+SHOW VARIABLES LIKE 'event_scheduler';
