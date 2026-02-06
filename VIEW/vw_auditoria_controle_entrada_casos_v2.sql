@@ -63,8 +63,14 @@ SELECT
    where tr.id_processo = p.pj
      and tr.evento = 'PET'
    order by tr.data_hora_lan desc
-   limit 1) AS 'PROTOCOLO DO PET'
-
+   limit 1) AS 'PROTOCOLO DO PET',
+   
+CASE
+  WHEN p.entrada IS NULL THEN dde.data_entrada_dde
+  WHEN dde.data_entrada_dde IS NULL THEN p.entrada
+  WHEN dde.data_entrada_dde < p.entrada THEN dde.data_entrada_dde
+  ELSE p.entrada
+END AS `DATA FINAL (REGRA DDE/ENTRADA)`
 FROM cad_processo p
 
 /* 🔒 garante DDE (se não existe, nem entra no resultado) */
@@ -75,12 +81,12 @@ INNER JOIN (
   FROM tramitacao
   WHERE evento = 'DDE'
   GROUP BY id_processo
-) dde
-  ON dde.id_processo = p.pj
+) dde ON dde.id_processo = p.pj
 
 LEFT JOIN cad_pessoa cp ON cp.codigo = p.primeiro_autor
 LEFT JOIN cad_pessoa cc ON cc.codigo = p.primeiro_reu
 LEFT JOIN tab_materia tm ON tm.codigo = p.materia
 LEFT JOIN tab_juizo j ON j.sigla = p.juizo
 LEFT JOIN tab_tema t ON t.id_tema = p.id_tema
-LEFT JOIN tab_fase f ON f.codigo = p.fase;
+LEFT JOIN tab_fase f ON f.codigo = p.fase
+where p.incidente = 0
